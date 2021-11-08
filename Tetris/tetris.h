@@ -28,7 +28,6 @@ class Tetromino {
     bool undone; /// allows undo only once
     std::pair<int, int> relBase; /// base point for movement and rotation
     std::pair<int, int> prevBase; /// Previous base point
-    std::set<std::pair<int, int>> nextPos;
     std::set<std::pair<int, int>> pos;
     std::set<std::pair<int, int>> prevPos;
     sf::Color color;

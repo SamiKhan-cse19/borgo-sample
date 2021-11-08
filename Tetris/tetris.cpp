@@ -4,7 +4,12 @@ Tetris::Tetris(World& world, ScoreBoard& scoreboard)
  : Engine(world, scoreboard), player("Sami"), tetromino(rand()%7, this), timer(0.0f), delay(0.6f)
 {
     srand(time(NULL));
-
+    std::pair<std::string, int> score("Score", player.getScore());
+//    std::pair<std::string, int> time("Time", std::floor(player.getTime().asSeconds()));
+//    scoreboard.addScore(score);
+//    scoreboard.addScore(time);
+    scoreboard.setBackgroundColor(sf::Color::White);
+    scoreboard.setTextColor(sf::Color::Black);
 }
 
 Tetris::Tetris(float bSize, unsigned int width, unsigned int height, sf::Vector2f& pos)
@@ -55,7 +60,7 @@ void Tetris::input()
 void Tetris::update(float& dt)
 {
     timer += dt;
-
+    player.incrementTime(dt);
     if (timer > delay)
     {
         tetromino.fallDown();
@@ -81,8 +86,11 @@ void Tetris::update(float& dt)
 
 
     world.addObject(tetromino.getColors());
+//    scoreboard.editScore("Score", player.getScore());
+//    scoreboard.editScore("Time", std::floor(player.getTime().asSeconds()));
 
     world.update();
+    scoreboard.update();
 }
 
 void Tetris::render()
@@ -117,29 +125,32 @@ void Tetris::checkCompletedLines(){
                 std::pair<int,int> p(j,i);
                 if(checkCollision(p)) isComplete=false;
             }
-            std::cout<<isComplete<<std::endl;
             if(isComplete) {
-                /// TODO : fix this shit
-
-//                for(int j=i-1; j>=0; j++) {
-//                    std::set<std::pair<int,int>> fromPos;
-//                    for(int k=0; k<world.getWidth(); k++){
-//                        fromPos.insert(std::pair<int,int>(k, j));
-//                    }
-//                    std::map<std::pair<int, int>, sf::Color> fromCol = world.getObjectColors(fromPos);
-//                    std::map<std::pair<int, int>, sf::Color> toCol;
-//                    for(int k=0; k<world.getWidth(); k++){
-//                        toCol[std::pair<int,int>(k, j+1)] = fromCol[std::pair<int,int>(k, j)];
-//                    }
-//                    world.addObject(toCol);
-//                }
-//                std::map<std::pair<int, int>, sf::Color> toCol;
-//                for(int k=0; k<world.getWidth(); k++){
-//                    toCol[std::pair<int,int>(k, 0)] = world.getBackgroundColor();
-//                }
-
+                for(int j=i-1; j>=0; j--) {
+                    std::set<std::pair<int,int>> fromPos;
+                    for(int k=0; k<getWidth(); k++){
+                        fromPos.insert(std::pair<int,int>(k, j));
+                    }
+                    std::map<std::pair<int, int>, sf::Color> fromCol = world.getObjectColors(fromPos);
+                    std::set<std::pair<int,int>> toPos;
+                    std::map<std::pair<int, int>, sf::Color> toCol;
+                    for(int k=0; k<getWidth(); k++){
+                        std::pair<int,int> p(k,j);
+                        if(world.checkForObject(p)){
+                            toCol[std::pair<int,int>(k, j+1)] = fromCol[p];
+                        }
+                        toPos.insert(std::pair<int,int>(k,j+1));
+                    }
+                    world.clearObject(toPos);
+                    world.addObject(toCol);
+                }
+                std::set<std::pair<int, int>> topPos;
+                for(int k=0; k<getWidth(); k++){
+                    topPos.insert(std::pair<int,int>(k, 0));
+                }
+                world.clearObject(topPos);
                 lineCount++;
-                std::cout<<"line complete "<<lineCount<<" "<<i<<std::endl;
+                player.setScore(player.getScore()+100);
             }
         }
         if(lineCount == 0) break;
